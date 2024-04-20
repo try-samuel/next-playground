@@ -5,15 +5,67 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import db from "@/db/db";
+import { formatCurrency, formatNumber } from "@/lib/formatters";
 
-function getSalesData() {}
+async function getSalesData() {
+  const data = await db.order.aggregate({
+    _sum: { pricePaidInCents: true },
+    _count: true,
+  });
 
-export default function AdminDashboard() {
+  return {
+    amounnt: (data._sum.pricePaidInCents || 0) / 100,
+    numberOfSales: data._count,
+  };
+}
+
+async function getUserData() {
+  const [userCount, orderData] = await Promise.all([
+    db.user.count(),
+    db.order.aggregate({
+      _sum: { pricePaidInCents: true },
+    }),
+  ]);
+
+  return {
+    userCount,
+    averageValuePerUser:
+      userCount === 0
+        ? 0
+        : (orderData._sum.pricePaidInCents || 0) / userCount / 100,
+  };
+}
+
+async function getProductsData() {
+  const;
+}
+
+export default async function AdminDashboard() {
+  const [salesData, userData] = await Promise.all([
+    getSalesData(),
+    getUserData(),
+  ]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <DashboardCard title="Total Sales" subtitle="This month" body="$10,000" />
-      <DashboardCard title="Total Customers" subtitle="This month" body="100" />
-      <DashboardCard title="Total Products" subtitle="This month" body="100" />
+      <DashboardCard
+        title="Total Sales"
+        subtitle={`${formatNumber(salesData.numberOfSales)} orders`}
+        body={formatCurrency(salesData.amounnt)}
+      />
+      <DashboardCard
+        title="Customers"
+        subtitle={`${formatCurrency(
+          userData.averageValuePerUser
+        )} Average Value`}
+        body={formatNumber(userData.userCount)}
+      />
+      <DashboardCard
+        title="Products"
+        subtitle="Total products in the store"
+        body="Coming soon"
+      />
     </div>
   );
 }
