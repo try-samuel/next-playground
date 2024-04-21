@@ -7,12 +7,12 @@ import {
 } from "@/components/ui/card";
 import db from "@/db/db";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
-
 async function getSalesData() {
   const data = await db.order.aggregate({
     _sum: { pricePaidInCents: true },
     _count: true,
   });
+  await wait(2000);
 
   return {
     amounnt: (data._sum.pricePaidInCents || 0) / 100,
@@ -38,13 +38,26 @@ async function getUserData() {
 }
 
 async function getProductsData() {
-  const;
+  const [ativeProducts, inactiveProducts] = await Promise.all([
+    db.product.count({ where: { isAvailableForPurchase: true } }),
+    db.product.count({ where: { isAvailableForPurchase: false } }),
+  ]);
+
+  return {
+    ativeProducts,
+    inactiveProducts,
+  };
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export default async function AdminDashboard() {
-  const [salesData, userData] = await Promise.all([
+  const [salesData, userData, productData] = await Promise.all([
     getSalesData(),
     getUserData(),
+    getProductsData(),
   ]);
 
   return (
@@ -62,9 +75,9 @@ export default async function AdminDashboard() {
         body={formatNumber(userData.userCount)}
       />
       <DashboardCard
-        title="Products"
-        subtitle="Total products in the store"
-        body="Coming soon"
+        title="Active Products"
+        subtitle={`${formatNumber(productData.inactiveProducts)} Inactive`}
+        body={`${formatNumber(productData.ativeProducts)} Active`}
       />
     </div>
   );
