@@ -16,8 +16,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ActiveToggleDropdownItem,
+  DeleteDropdownItem,
+} from "./_components/ProdutAction";
 
 export default function AdminProductsPage() {
   return (
@@ -73,7 +78,7 @@ async function ProductsTable() {
                 </>
               ) : (
                 <>
-                  <XCircleIcon />
+                  <XCircleIcon className="stroke-destructive" />
                   <span className="sr-only">Unavailable</span>
                 </>
               )}
@@ -98,6 +103,15 @@ async function ProductsTable() {
                       Edit
                     </Link>
                   </DropdownMenuItem>
+                  <ActiveToggleDropdownItem
+                    id={product.id}
+                    isAvailableForPurchase={product.isAvailableForPurchase}
+                  />
+                  <DropdownMenuSeparator />
+                  <DeleteDropdownItem
+                    id={product.id}
+                    disabled={product._count.Orders > 0}
+                  />
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>
